@@ -2,13 +2,52 @@ EXTRA_DIST =
 
 COMPILE_TARGET = console
 ASSEMBLY_COMPILER = CSC
-CSC_ARGS = $(CSC_NO_UNSAFE) $(CSC_STRONGNAME)
+CSC_ARGS = $(CSC_UNSAFE) $(CSC_STRONGNAME)
 
 all: $(ASSEMBLY) $(LINUX_PKGCONFIG) $(ASSEMBLY_WRAPPER)
 
 FILES = \
+	Argb.cs \
+	Box.cs \
+	BoxCommandDefinition.cs \
+	CallCommandDefinition.cs \
+	Cif.cs \
+	CifFormatException.cs \
+	CifLexerBase.cs \
+	CifLexerBase.LexerState.cs \
+	CifLexerBase.LexerToken.cs \
+	CifLexerBase.LexerTokenType.cs \
+	CommandDefinition.cs \
+	DefCommandDefinition.cs \
+	DefDeleteCommandDefinition.cs \
+	DefFinishCommandDefinition.cs \
+	DefStartCommandDefinition.cs \
+	IDrawable.cs \
+	IIntersectable.cs \
+	LayerCommandDefinition.cs \
+	Layout.cs \
+	Line.cs \
+	MirrorAxis.cs \
+	MirrorDefinition.cs \
+	ParserToken.cs \
+	Point.cs \
+	Polygon.cs \
+	PolygonCommandDefinition.cs \
+	Position.cs \
+	PrintCommandDefinition.cs \
 	Program.cs \
-	Properties/AssemblyInfo.cs
+	Properties/AssemblyInfo.cs \
+	RotationDefinition.cs \
+	Round.cs \
+	RoundCommandDefinition.cs \
+	StringEscapeExtension.cs \
+	Symbol.cs \
+	SymbolNameCommandDefinition.cs \
+	TextCommandDefinition.cs \
+	TransformationDefinition.cs \
+	TranslationDefinition.cs \
+	Vector.cs \
+	WireCommandDefinition.cs
 
 DATA_FILES =
 
