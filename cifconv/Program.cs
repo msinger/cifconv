@@ -291,6 +291,7 @@ namespace cifconv
 		{
 			switch (style)
 			{
+				case "mask":            return new MaskDrawStyle();
 				case null:
 				case "":
 				case "electric-mocmos": return new ElectricMocmosDrawStyle();

@@ -29,6 +29,7 @@ FILES = \
 	LayerCommandDefinition.cs \
 	Layout.cs \
 	Line.cs \
+	MaskDrawStyle.cs \
 	MirrorAxis.cs \
 	MirrorDefinition.cs \
 	ParserToken.cs \
