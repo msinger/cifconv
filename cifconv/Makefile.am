@@ -22,6 +22,8 @@ FILES = \
 	DefDeleteCommandDefinition.cs \
 	DefFinishCommandDefinition.cs \
 	DefStartCommandDefinition.cs \
+	DrawStyle.cs \
+	ElectricMocmosDrawStyle.cs \
 	IDrawable.cs \
 	IIntersectable.cs \
 	LayerCommandDefinition.cs \
