@@ -19,6 +19,8 @@ namespace cifconv
 			string outPng       = null;
 			string styleStr     = null;
 			string layer        = null;
+			string whitelistStr = null;
+			string blacklistStr = null;
 			string scaleStr     = null;
 			string originXStr   = null;
 			string originYStr   = null;
@@ -27,6 +29,7 @@ namespace cifconv
 			string bgStr        = null;
 			string atStr        = null;
 			List<string> files  = new List<string>();
+
 
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -38,6 +41,8 @@ namespace cifconv
 						case "--png":        genPng       = true; outPng       = nextArg; i++; break;
 						case "--style":                           styleStr     = nextArg; i++; break;
 						case "--layer":                           layer        = nextArg; i++; break;
+						case "--whitelist":                       whitelistStr = nextArg; i++; break;
+						case "--blacklist":                       blacklistStr = nextArg; i++; break;
 						case "--scale":                           scaleStr     = nextArg; i++; break;
 						case "--origin-x":                        originXStr   = nextArg; i++; break;
 						case "--origin-y":                        originYStr   = nextArg; i++; break;
@@ -62,11 +67,46 @@ namespace cifconv
 				return 1;
 			}
 
-			if (!string.IsNullOrEmpty(layer) && !LayerIsValid(layer))
+			if (!string.IsNullOrEmpty(layer) && !IsLayerValid(layer))
 			{
 				Console.Error.WriteLine("Invalid layer: " + layer);
 				return 1;
 			}
+
+			string[] whitelist = null;
+			string[] blacklist = null;
+			if (!string.IsNullOrEmpty(whitelistStr))
+			{
+				whitelist = whitelistStr.Split(new char[] { ';', ',', ':', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string s in whitelist)
+				{
+					if (!IsLayerValid(s))
+					{
+						Console.Error.WriteLine("Invalid layer in whitelist: " + s);
+						return 1;
+					}
+				}
+			}
+			if (!string.IsNullOrEmpty(blacklistStr))
+			{
+				blacklist = blacklistStr.Split(new char[] { ';', ',', ':', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string s in blacklist)
+				{
+					if (!IsLayerValid(s))
+					{
+						Console.Error.WriteLine("Invalid layer in blacklist: " + s);
+						return 1;
+					}
+				}
+			}
+			List<string> drawnLayers = new List<string>();
+			if (whitelist != null)
+				drawnLayers.AddRange(whitelist);
+			else
+				drawnLayers.AddRange(validLayers);
+			drawnLayers.Add("selected");
+			if (blacklist != null)
+				drawnLayers.RemoveAll(s => Array.IndexOf(blacklist, s) != -1);
 
 			double scale = double.NaN;
 			if (scaleStr != null && scaleStr != "auto")
@@ -116,7 +156,7 @@ namespace cifconv
 				{
 					atLayer = atArr[1].Substring(atIdx + 1);
 					atArr[1] = atArr[1].Substring(0, atIdx);
-					if (!LayerIsValid(atLayer))
+					if (!IsLayerValid(atLayer))
 					{
 						Console.Error.WriteLine("Invalid layer: " + layer);
 						return 1;
@@ -277,7 +317,7 @@ namespace cifconv
 				if (!string.IsNullOrEmpty(outPng) && outPng != "-")
 					s = File.Create(outPng);
 				if (string.IsNullOrEmpty(layer))
-					bmp = style.DrawLayout(layout, width, height, bg);
+					bmp = style.DrawLayout(layout, width, height, bg, drawnLayers);
 				else
 					bmp = style.DrawLayer(layout, layer, width, height, bg);
 				bmp.Save(s, ImageFormat.Png);
@@ -308,6 +348,8 @@ namespace cifconv
 			Console.Error.WriteLine("  --style <STYLE>              Choose drawing style of PNG.");
 			Console.Error.WriteLine("  --layer <LAYER>              Select one layer to operate on. If not given,");
 			Console.Error.WriteLine("                               all layers are selected.");
+			Console.Error.WriteLine("  --whitelist <LAYERS>         List of layers to draw.");
+			Console.Error.WriteLine("  --blacklist <LAYERS>         List of layers not to draw.");
 			Console.Error.WriteLine("  --scale <FACTOR>             Choose scale factor for image.");
 			Console.Error.WriteLine("  --origin-x <XCOORD>          Choose X translation of origin point of image.");
 			Console.Error.WriteLine("  --origin-y <YCOORD>          Choose Y translation of origin point of image.");
@@ -324,48 +366,48 @@ namespace cifconv
 			Console.Error.WriteLine("and checks if there are no errors.");
 		}
 
-		private static bool LayerIsValid(string layer)
+		private static string[] validLayers = new string[] {
+			"well",
+			"p-well",
+			"n-well",
+			"active",
+			"select",
+			"p-select",
+			"n-select",
+			"poly",
+			"contact",
+			"metal1",
+			"via1",
+			"metal2",
+			"via2",
+			"metal3",
+			"via3",
+			"metal4",
+			"via4",
+			"metal5",
+			"via5",
+			"metal6",
+			"p-high-voltage",
+			"n-high-voltage",
+			"thick-active",
+			"mems-open",
+			"mems-etch-stop",
+			"pad",
+			"exp-field-impl",
+			"poly-cap",
+			"silicide-block",
+			"passivation",
+			"electrode",
+			"burried",
+			"p-base",
+			"cap-well",
+			"depletion",
+			"hi-res",
+		};
+
+		private static bool IsLayerValid(string layer)
 		{
-			switch (layer)
-			{
-				case "well":
-				case "p-well":
-				case "n-well":
-				case "active":
-				case "select":
-				case "p-select":
-				case "n-select":
-				case "poly":
-				case "contact":
-				case "metal1":
-				case "via1":
-				case "metal2":
-				case "via2":
-				case "metal3":
-				case "via3":
-				case "metal4":
-				case "via4":
-				case "metal5":
-				case "via5":
-				case "metal6":
-				case "p-high-voltage":
-				case "n-high-voltage":
-				case "thick-active":
-				case "mems-open":
-				case "mems-etch-stop":
-				case "pad":
-				case "exp-field-impl":
-				case "poly-cap":
-				case "silicide-block":
-				case "passivation":
-				case "electrode":
-				case "burried":
-				case "p-base":
-				case "cap-well":
-				case "depletion":
-				case "hi-res":         return true;
-				default:               return false;
-			}
+			return Array.IndexOf(validLayers, layer) != -1;
 		}
 	}
 }

@@ -62,10 +62,10 @@ namespace cifconv
 			return bmp;
 		}
 
-		protected virtual Bitmap DrawTransparentLayers(Layout layout, int width, int height, uint bgcolor)
+		protected virtual Bitmap DrawTransparentLayers(Layout layout, int width, int height, uint bgcolor, List<string> drawnLayers)
 		{
 			Bitmap bmp;
-			if (TransparentLayers.Length >= 1)
+			if (TransparentLayers.Length >= 1 && drawnLayers.Contains(TransparentLayers[0]))
 				bmp = BitmapFromTransLayer(layout, TransparentLayers[0], width, height);
 			else
 				bmp = NewBitmap(width, height);
@@ -73,6 +73,8 @@ namespace cifconv
 			                        ImageLockMode.ReadWrite, bmp.PixelFormat);
 			for (int i = 1, j = 2; i < TransparentLayers.Length; i++, j <<= 1)
 			{
+				if (!drawnLayers.Contains(TransparentLayers[i]))
+					continue;
 				using (Bitmap bmp2 = BitmapFromTransLayer(layout, TransparentLayers[i], width, height))
 				{
 					var data2 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height),
@@ -110,13 +112,13 @@ namespace cifconv
 			return bmp;
 		}
 
-		protected virtual void DrawSolidLayers(Layout layout, Bitmap bmp)
+		protected virtual void DrawSolidLayers(Layout layout, Bitmap bmp, List<string> drawnLayers)
 		{
 			using (Graphics g = NewGraphics(bmp))
 			{
 				foreach (var l in SolidLayers)
 				{
-					if (layout.Layers.ContainsKey(l))
+					if (layout.Layers.ContainsKey(l) && drawnLayers.Contains(l))
 					{
 						Pen   p = GetLayerPen(l);
 						Brush b = GetLayerBrush(l);
@@ -127,10 +129,10 @@ namespace cifconv
 			}
 		}
 
-		public virtual Bitmap DrawLayout(Layout layout, int width, int height, uint bgcolor)
+		public virtual Bitmap DrawLayout(Layout layout, int width, int height, uint bgcolor, List<string> drawnLayers)
 		{
-			Bitmap bmp = DrawTransparentLayers(layout, width, height, bgcolor);
-			DrawSolidLayers(layout, bmp);
+			Bitmap bmp = DrawTransparentLayers(layout, width, height, bgcolor, drawnLayers);
+			DrawSolidLayers(layout, bmp, drawnLayers);
 			return bmp;
 		}
 
