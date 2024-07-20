@@ -12,7 +12,7 @@ namespace cifconv
 			TransparentLayers = new string[] {
 				"metal1",
 				"poly",
-				"active",
+				"active,p-active,n-active",
 				"metal2",
 				"metal3",
 			};
@@ -36,6 +36,10 @@ namespace cifconv
 			SolidLayers = new string[] {
 				"silicide-block",
 				"contact",
+				"oversize-contact",
+				"active-contact",
+				"poly-contact",
+				"electrode-contact",
 				"via1",
 				"via2",
 				"via3",
@@ -67,44 +71,44 @@ namespace cifconv
 		{
 			switch (layer)
 			{
-				case "well":           return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
-				case "p-well":         return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
-				case "n-well":         return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
-				case "active":         return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
-				case "select":         return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
-				case "p-select":       return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
-				case "n-select":       return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
-				case "poly":           return Color.FromArgb(0xff, 0xff, 0x9b, 0xc0);
-				case "contact":        return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
-				case "metal1":         return Color.FromArgb(0xff, 0x60, 0xd1, 0xff);
-				case "via1":           return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
-				case "metal2":         return Color.FromArgb(0xff, 0xe0, 0x5f, 0xff);
-				case "via2":           return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
-				case "metal3":         return Color.FromArgb(0xff, 0xf7, 0xfb, 0x14);
-				case "via3":           return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
-				case "metal4":         return Color.FromArgb(0xff, 0x96, 0x96, 0xff);
-				case "via4":           return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
-				case "metal5":         return Color.FromArgb(0xff, 0xff, 0xbe, 0x06);
-				case "via5":           return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
-				case "metal6":         return Color.FromArgb(0xff, 0x00, 0xff, 0xff);
-				case "p-high-voltage": return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "n-high-voltage": return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "thick-active":   return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "mems-open":      return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "mems-etch-stop": return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "pad":            return Color.FromArgb(0xff, 0xff, 0x00, 0x00);
-				case "exp-field-impl": return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "poly-cap":       return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "silicide-block": return Color.FromArgb(0xff, 0xff, 0x9b, 0xc0);
-				case "passivation":    return Color.FromArgb(0xff, 0x64, 0x64, 0x64); // aka. glass
-				case "electrode":      return Color.FromArgb(0xff, 0xff, 0xbe, 0x06); // aka. poly2
-				case "burried":        return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "p-base":         return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
-				case "cap-well":       return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "depletion":      return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
-				case "hi-res":         return Color.FromArgb(0xff, 0xff, 0x00, 0x00);
-				case "selected":       return Color.FromArgb(0xaa, 0x00, 0xff, 0xff);
-				default:               return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
+				case "well":              return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
+				case "p-well":            return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
+				case "n-well":            return Color.FromArgb(0xff, 0x8b, 0x63, 0x2e);
+				case "active":            return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
+				case "p-active":          return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
+				case "n-active":          return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
+				case "select":            return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
+				case "p-select":          return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
+				case "n-select":          return Color.FromArgb(0xff, 0xff, 0xff, 0x00);
+				case "poly":              return Color.FromArgb(0xff, 0xff, 0x9b, 0xc0);
+				case "contact":           return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
+				case "oversize-contact":  return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
+				case "active-contact":    return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
+				case "poly-contact":      return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
+				case "electrode-contact": return Color.FromArgb(0xff, 0x64, 0x64, 0x64);
+				case "metal1":            return Color.FromArgb(0xff, 0x60, 0xd1, 0xff);
+				case "via1":              return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
+				case "metal2":            return Color.FromArgb(0xff, 0xe0, 0x5f, 0xff);
+				case "via2":              return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
+				case "metal3":            return Color.FromArgb(0xff, 0xf7, 0xfb, 0x14);
+				case "via3":              return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
+				case "metal4":            return Color.FromArgb(0xff, 0x96, 0x96, 0xff);
+				case "via4":              return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
+				case "metal5":            return Color.FromArgb(0xff, 0xff, 0xbe, 0x06);
+				case "via5":              return Color.FromArgb(0xff, 0xb4, 0xb4, 0xb4);
+				case "metal6":            return Color.FromArgb(0xff, 0x00, 0xff, 0xff);
+				case "p-high-voltage":    return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
+				case "n-high-voltage":    return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
+				case "thick-active":      return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
+				case "pad":               return Color.FromArgb(0xff, 0xff, 0x00, 0x00);
+				case "poly-cap":          return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
+				case "silicide-block":    return Color.FromArgb(0xff, 0xff, 0x9b, 0xc0);
+				case "passivation":       return Color.FromArgb(0xff, 0x64, 0x64, 0x64); // aka. glass
+				case "electrode":         return Color.FromArgb(0xff, 0xff, 0xbe, 0x06); // aka. poly2
+				case "p-base":            return Color.FromArgb(0xff, 0x6b, 0xe2, 0x60);
+				case "hi-res":            return Color.FromArgb(0xff, 0xff, 0x00, 0x00);
+				case "selected":          return Color.FromArgb(0xaa, 0x00, 0xff, 0xff);
+				default:                  return Color.FromArgb(0xff, 0x00, 0x00, 0x00);
 			}
 		}
 

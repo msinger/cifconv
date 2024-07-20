@@ -44,19 +44,22 @@ namespace cifconv
 			return g;
 		}
 
-		protected virtual Bitmap BitmapFromTransLayer(Layout layout, string layer, int width, int height)
+		protected virtual Bitmap BitmapFromTransLayer(Layout layout, List<string> layers, int width, int height)
 		{
 			Bitmap bmp = NewBitmap(width, height);
 			using (Graphics g = NewGraphics(bmp))
 			{
-				if (layout.Layers.ContainsKey(layer))
+				foreach (string ls in layers)
 				{
-					var   l = layout.Layers[layer];
-					Color c = GetLayerColor(layer);
-					Pen   p = new Pen(c);
-					Brush b = new SolidBrush(c);
-					foreach (var d in l)
-						d.Draw(g, p, b);
+					if (layout.Layers.ContainsKey(ls))
+					{
+						var   l = layout.Layers[ls];
+						Color c = GetLayerColor(layers[0]);
+						Pen   p = new Pen(c);
+						Brush b = new SolidBrush(c);
+						foreach (var d in l)
+							d.Draw(g, p, b);
+					}
 				}
 			}
 			return bmp;
@@ -65,17 +68,21 @@ namespace cifconv
 		protected virtual Bitmap DrawTransparentLayers(Layout layout, int width, int height, uint bgcolor, List<string> drawnLayers)
 		{
 			Bitmap bmp;
-			if (TransparentLayers.Length >= 1 && drawnLayers.Contains(TransparentLayers[0]))
-				bmp = BitmapFromTransLayer(layout, TransparentLayers[0], width, height);
+			List<string> layers = new List<string>(TransparentLayers[0].Split(','));
+			layers.RemoveAll(s => !drawnLayers.Contains(s));
+			if (TransparentLayers.Length >= 1 && layers.Count >= 1)
+				bmp = BitmapFromTransLayer(layout, layers, width, height);
 			else
 				bmp = NewBitmap(width, height);
 			var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
 			                        ImageLockMode.ReadWrite, bmp.PixelFormat);
 			for (int i = 1, j = 2; i < TransparentLayers.Length; i++, j <<= 1)
 			{
-				if (!drawnLayers.Contains(TransparentLayers[i]))
+				layers = new List<string>(TransparentLayers[i].Split(','));
+				layers.RemoveAll(s => !drawnLayers.Contains(s));
+				if (layers.Count == 0)
 					continue;
-				using (Bitmap bmp2 = BitmapFromTransLayer(layout, TransparentLayers[i], width, height))
+				using (Bitmap bmp2 = BitmapFromTransLayer(layout, layers, width, height))
 				{
 					var data2 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height),
 					                          ImageLockMode.ReadOnly, bmp2.PixelFormat);
