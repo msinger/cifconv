@@ -54,9 +54,8 @@ namespace cifconv
 					if (layout.Layers.ContainsKey(ls))
 					{
 						var   l = layout.Layers[ls];
-						Color c = GetLayerColor(layers[0]);
-						Pen   p = new Pen(c);
-						Brush b = new SolidBrush(c);
+						Pen   p = GetLayerPen(ls);
+						Brush b = GetLayerBrush(ls);
 						foreach (var d in l)
 							d.Draw(g, p, b);
 					}
@@ -67,53 +66,49 @@ namespace cifconv
 
 		protected virtual Bitmap DrawTransparentLayers(Layout layout, int width, int height, uint bgcolor, List<string> drawnLayers)
 		{
+			if (TransparentLayers.Length > 8)
+				throw new Exception("too many transparent layers");
 			Bitmap bmp;
-			List<string> layers = new List<string>(TransparentLayers[0].Split(','));
-			layers.RemoveAll(s => !drawnLayers.Contains(s));
-			if (TransparentLayers.Length >= 1 && layers.Count >= 1)
-				bmp = BitmapFromTransLayer(layout, layers, width, height);
-			else
-				bmp = NewBitmap(width, height);
-			var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-			                        ImageLockMode.ReadWrite, bmp.PixelFormat);
-			for (int i = 1, j = 2; i < TransparentLayers.Length; i++, j <<= 1)
+			byte[] mux = null;
+			for (int i = 0, j = 1; i < TransparentLayers.Length; i++, j <<= 1)
 			{
-				layers = new List<string>(TransparentLayers[i].Split(','));
+				List<string> layers = new List<string>(TransparentLayers[i].Split(','));
 				layers.RemoveAll(s => !drawnLayers.Contains(s));
 				if (layers.Count == 0)
 					continue;
-				using (Bitmap bmp2 = BitmapFromTransLayer(layout, layers, width, height))
+				using (Bitmap tbmp = BitmapFromTransLayer(layout, layers, width, height))
 				{
-					var data2 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height),
-					                          ImageLockMode.ReadOnly, bmp2.PixelFormat);
+					var tdata = tbmp.LockBits(new Rectangle(0, 0, tbmp.Width, tbmp.Height),
+					                          ImageLockMode.ReadOnly, tbmp.PixelFormat);
+					if (mux == null)
+						mux = new byte[tdata.Stride * tdata.Height / sizeof(uint)];
+					if (mux.Length != tdata.Stride * tdata.Height / sizeof(uint))
+						throw new Exception("bitmaps have different strides");
 					unsafe
 					{
-						uint* p = (uint*)data.Scan0;
-						uint* q = (uint*)data2.Scan0;
-						for (int k = 0; k < data.Stride * data.Height / sizeof(uint); k++)
-						{
-							if (q[k] != 0)
-							{
-								for (int l = j, m = 0; m < j; l++, m++)
-								{
-									if (p[k] == TransparentColors[m])
-									{
-										p[k] = TransparentColors[l];
-										break;
-									}
-								}
-							}
-						}
+						uint* p = (uint*)tdata.Scan0;
+						for (int k = 0; k < mux.Length; k++)
+							if (p[k] != 0)
+								mux[k] |= (byte)j;
 					}
-					bmp2.UnlockBits(data2);
+					tbmp.UnlockBits(tdata);
 				}
 			}
+			bmp = NewBitmap(width, height);
+			var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+			                        ImageLockMode.WriteOnly, bmp.PixelFormat);
+			if (mux == null)
+				mux = new byte[data.Stride * data.Height / sizeof(uint)];
+			if (mux.Length != data.Stride * data.Height / sizeof(uint))
+				throw new Exception("bitmaps have different strides");
 			unsafe
 			{
 				uint* p = (uint*)data.Scan0;
-				for (int i = 0; i < data.Stride * data.Height / sizeof(uint); i++)
-					if (p[i] == 0)
-						p[i] = bgcolor;
+				for (int i = 0; i < mux.Length; i++)
+				{
+					uint c = TransparentColors[mux[i]];
+					p[i] = (c != 0) ? c : bgcolor;
+				}
 			}
 			bmp.UnlockBits(data);
 			return bmp;
@@ -243,10 +238,6 @@ namespace cifconv
 				}
 				TransparentColors[i] = ((i != 0) ? 0xff000000 : 0) | (r << 16) | (g << 8) | b;
 			}
-			for (int i = 0; i < mapLen; i++)
-				for (int j = i + 1; j < mapLen; j++)
-					if (TransparentColors[i] == TransparentColors[j])
-						throw new Exception("color map contains duplicates");
 		}
 	}
 }

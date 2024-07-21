@@ -11,14 +11,13 @@ namespace cifconv
 		{
 			TransparentLayers = new string[] {
 				"metal1",
-				"poly",
+				"poly,silicide-block",
 				"active,p-active,n-active",
 				"metal2",
 				"metal3",
 			};
 
 			SolidLayers = new string[] {
-				"silicide-block",
 				"contact",
 				"oversize-contact",
 				"active-contact",
