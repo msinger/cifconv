@@ -17,22 +17,6 @@ namespace cifconv
 				"metal3",
 			};
 
-			TransparentColors = new uint[] {
-				0,
-				// metal1
-				0xff60d1ff,
-				// poly     m1+pol
-				0xffff9bc0, 0xff8389a9,
-				// active   m1+act      pol+act     m1+pol+act
-				0xff6be260, 0xff59be90, 0xff94a977, 0xff77b485,
-				// metal2   m1+m2       pol+m2      m1+pol+m2   act+m2      m1+act+m2   pol+act+m2  m1+p+a+m2
-				0xffe05fff, 0xff7873c0, 0xffae5aa2, 0xff9468b3, 0xff8d9893, 0xff8387ab, 0xff9f7a9c, 0xff9181a4,
-				// metal3   m1+m3       pol+m3      m1+pol+m3   act+m3      m1+act+m3   pol+act+m3  m1+p+a+m3
-				0xfff7fb14, 0xff88b86f, 0xffbc984f, 0xffa4a861, 0xff8fcb36, 0xff8cc353, 0xffa7b344, 0xff9abb4c,
-				// m2+m3    m1+m2+m3    pol+m2+m3   m1+p+m2+m3  act+m2+m3   m1+a+m2+m3  p+a+m2+m3   1+p+a+2+3
-				0xffb9886c, 0xffa2a170, 0xffbb905e, 0xffaf9967, 0xffa6ad54, 0xffa4a862, 0xffb19f59, 0xffaaa35e,
-			};
-
 			SolidLayers = new string[] {
 				"silicide-block",
 				"contact",
@@ -65,6 +49,8 @@ namespace cifconv
 				"metal6",
 				"selected",
 			};
+
+			GenerateElectricColorMap();
 		}
 
 		public override Color GetLayerColor(string layer)

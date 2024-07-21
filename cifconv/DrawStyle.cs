@@ -178,5 +178,75 @@ namespace cifconv
 				}
 			}
 		}
+
+		private static void NormalizeColor(double[] a)
+		{
+			double mag = Math.Sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+			if (mag < 1.0e-11)
+				return;
+			a[0] /= mag;
+			a[1] /= mag;
+			a[2] /= mag;
+		}
+
+		protected void GenerateElectricColorMap()
+		{
+			int len = TransparentLayers.Length;
+			int mapLen = 1 << len;
+			TransparentColors = new uint[mapLen];
+			Color[] layerColors = new Color[len];
+			for (int i = 0; i < len; i++)
+			{
+				List<string> layers = new List<string>(TransparentLayers[i].Split(','));
+				layerColors[i] = GetLayerColor(layers[0]);
+			}
+			for (int i = 0; i < mapLen; i++)
+			{
+				uint r = 0, g = 0, b = 0;
+				bool hasPrev = false;
+				for (int j = 0; j < len; j++)
+				{
+					if ((i & (1 << j)) == 0)
+						continue;
+					Color layerColor = layerColors[j];
+					if (hasPrev)
+					{
+						// get the previous color
+						double[] lastColor = new double[3];
+						lastColor[0] = (double)r / 255.0;
+						lastColor[1] = (double)g / 255.0;
+						lastColor[2] = (double)b / 255.0;
+						NormalizeColor(lastColor);
+
+						// get the current color
+						double[] curColor = new double[3];
+						curColor[0] = (double)layerColor.R / 255.0;
+						curColor[1] = (double)layerColor.G / 255.0;
+						curColor[2] = (double)layerColor.B / 255.0;
+						NormalizeColor(curColor);
+
+						// combine them
+						for (int k = 0; k < 3; k++)
+							curColor[k] += lastColor[k];
+						NormalizeColor(curColor);
+						r = (uint)(curColor[0] * 255.0);
+						g = (uint)(curColor[1] * 255.0);
+						b = (uint)(curColor[2] * 255.0);
+					}
+					else
+					{
+						r = layerColor.R;
+						g = layerColor.G;
+						b = layerColor.B;
+						hasPrev = true;
+					}
+				}
+				TransparentColors[i] = ((i != 0) ? 0xff000000 : 0) | (r << 16) | (g << 8) | b;
+			}
+			for (int i = 0; i < mapLen; i++)
+				for (int j = i + 1; j < mapLen; j++)
+					if (TransparentColors[i] == TransparentColors[j])
+						throw new Exception("color map contains duplicates");
+		}
 	}
 }
