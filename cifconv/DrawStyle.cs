@@ -57,7 +57,7 @@ namespace cifconv
 						Pen   p = GetLayerPen(ls);
 						Brush b = GetLayerBrush(ls);
 						foreach (var d in l)
-							d.Draw(g, p, b);
+							Draw(d, g, ls, p, b);
 					}
 				}
 			}
@@ -125,7 +125,7 @@ namespace cifconv
 						Pen   p = GetLayerPen(l);
 						Brush b = GetLayerBrush(l);
 						foreach (var d in layout.Layers[l])
-							d.Draw(g, p, b);
+							Draw(d, g, l, p, b);
 					}
 				}
 			}
@@ -151,9 +151,14 @@ namespace cifconv
 			using (Graphics g = NewGraphics(bmp))
 			{
 				foreach (var d in l)
-					d.Draw(g, p, b);
+					Draw(d, g, layer, p, b);
 			}
 			return bmp;
+		}
+
+		protected virtual void Draw(IDrawable d, Graphics g, string layer, Pen p, Brush b)
+		{
+			d.Draw(g, p, b);
 		}
 
 		protected virtual TextureBrush BrushFromMono16X16(ushort[] buf, Color color)

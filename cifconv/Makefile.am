@@ -23,7 +23,10 @@ FILES = \
 	DefFinishCommandDefinition.cs \
 	DefStartCommandDefinition.cs \
 	DrawStyle.cs \
+	ElectricCmosDrawStyle.cs \
 	ElectricMocmosDrawStyle.cs \
+	ElectricNmosDrawStyle.cs \
+	ElectricRcmosDrawStyle.cs \
 	IDrawable.cs \
 	IIntersectable.cs \
 	LayerCommandDefinition.cs \

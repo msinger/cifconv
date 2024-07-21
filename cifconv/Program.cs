@@ -331,11 +331,16 @@ namespace cifconv
 		{
 			switch (style)
 			{
-				case "mask":            return new MaskDrawStyle();
+				case "electric-cmos":         return new ElectricCmosDrawStyle();
 				case null:
 				case "":
-				case "electric-mocmos": return new ElectricMocmosDrawStyle();
-				default:                return null;
+				case "electric-mocmos":       return new ElectricMocmosDrawStyle();
+				case "electric-mocmos-print": return new ElectricMocmosDrawStyle(true);
+				case "electric-nmos":         return new ElectricNmosDrawStyle();
+				case "electric-rcmos":        return new ElectricRcmosDrawStyle();
+				case "electric-rcmos-print":  return new ElectricRcmosDrawStyle(true);
+				case "mask":                  return new MaskDrawStyle();
+				default:                      return null;
 			}
 		}
 
