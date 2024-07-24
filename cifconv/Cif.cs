@@ -617,11 +617,39 @@ namespace cifconv
 			return d;
 		}
 
-		public Dictionary<string, List<IDrawable>> Interpret()
+		public Dictionary<string, List<IDrawable>> Interpret(string callSym = null)
 		{
+			bool runAll = string.IsNullOrEmpty(callSym);
 			Dictionary<uint, Symbol> syms = new Dictionary<uint, Symbol>();
 			Dictionary<string, List<IDrawable>> layers = new Dictionary<string, List<IDrawable>>();
-			Interpret(Commands, false, syms, new List<object>(), layers, 0);
+			Interpret(Commands, runAll, false, syms, new List<object>(), layers, 0);
+			if (!runAll)
+			{
+				if (layers.Count != 0)
+					throw new Exception("Layers should be empty after initial interpreter run when a specific symbol was selected.");
+				Symbol sym = null;
+				uint symNum = 0;
+				if (uint.TryParse(callSym, NumberStyles.None, NumberFormatInfo.InvariantInfo, out symNum))
+					if (syms.ContainsKey(symNum))
+						sym = syms[symNum];
+				if (sym == null)
+				{
+					foreach (Symbol s in syms.Values)
+					{
+						if (s.Name == callSym)
+						{
+							sym = s;
+							break;
+						}
+					}
+				}
+				if (sym == null)
+					throw new Exception("Symbol " + callSym + " not defined.");
+				List<object> trans = new List<object>();
+				if (sym.A != sym.B)
+					trans.Add((double)sym.A / (double)sym.B);
+				Interpret(sym.Commands, true, true, syms, trans, layers, 0);
+			}
 			return layers;
 		}
 
@@ -702,6 +730,7 @@ namespace cifconv
 		}
 
 		protected static void Interpret(List<CommandDefinition>             cmds,
+		                                bool                                execute,
 		                                bool                                isSub,
 		                                Dictionary<uint, Symbol>            syms,
 		                                List<object>                        trans,
@@ -712,7 +741,7 @@ namespace cifconv
 			Symbol curSym = null;
 
 			if (callDepth >= 256)
-				throw new ApplicationException("Symbol call depth >256.");
+				throw new Exception("Symbol call depth >256.");
 
 			foreach (CommandDefinition cmd in cmds)
 			{
@@ -723,7 +752,7 @@ namespace cifconv
 					{
 						curSym.Commands.Add(pcmd);
 					}
-					else
+					else if (execute)
 					{
 						Polygon pol = new Polygon();
 						foreach (var p in pcmd.Points)
@@ -738,7 +767,7 @@ namespace cifconv
 					{
 						curSym.Commands.Add(bcmd);
 					}
-					else
+					else if (execute)
 					{
 						if (bcmd.Direction.X != 0 && bcmd.Direction.Y != 0)
 						{
@@ -765,7 +794,7 @@ namespace cifconv
 					{
 						curSym.Commands.Add(rcmd);
 					}
-					else
+					else if (execute)
 					{
 						Vector c = ApplyTrans(rcmd.Center, trans);
 						double d = ApplyScale(rcmd.Diameter, trans);
@@ -784,7 +813,7 @@ namespace cifconv
 					LayerCommandDefinition lcmd = (LayerCommandDefinition)cmd;
 					if (curSym != null)
 						curSym.Commands.Add(lcmd);
-					else
+					else if (execute)
 						layer = lcmd.Layer;
 				}
 				else if (cmd is DefStartCommandDefinition)
@@ -821,13 +850,16 @@ namespace cifconv
 					CallCommandDefinition ccmd = (CallCommandDefinition)cmd;
 					if (!syms.ContainsKey(ccmd.Symbol))
 						throw new CifFormatException(ccmd.Pos, "Calling non-existent symbol.");
-					List<object> subTrans = new List<object>();
-					Symbol callSym = syms[ccmd.Symbol];
-					if (callSym.A != callSym.B)
-						subTrans.Add((double)callSym.A / (double)callSym.B);
-					subTrans.AddRange(ccmd.Transformations);
-					subTrans.AddRange(trans);
-					Interpret(callSym.Commands, true, syms, subTrans, layers, callDepth + 1);
+					if (execute)
+					{
+						List<object> subTrans = new List<object>();
+						Symbol callSym = syms[ccmd.Symbol];
+						if (callSym.A != callSym.B)
+							subTrans.Add((double)callSym.A / (double)callSym.B);
+						subTrans.AddRange(ccmd.Transformations);
+						subTrans.AddRange(trans);
+						Interpret(callSym.Commands, true, true, syms, subTrans, layers, callDepth + 1);
+					}
 				}
 				else if (cmd is PrintCommandDefinition)
 				{

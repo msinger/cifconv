@@ -7,15 +7,6 @@ option in Electric VLSI for exporting layouts.
 Read [INSTALL](INSTALL) for build/install instructions.
 
 
-Usage
------
-
-Generate PNG image containing all layers:
-```
-cifconv --png output.png input.cif
-```
-
-
 Example
 -------
 
@@ -33,12 +24,23 @@ cifconv --png dff_reg_bit_a.png dff_reg_bit_a.cif --width 400 --bg ffc0c0c0
 ![](output_example.png)
 
 
+Usage
+-----
+
+```
+cifconv [<OPTIONS>] [<FILES>]
+```
+
+`<FILES>` can be 0 or more input files in CIF format. If no input files are given, then standard input is read.
+
+
 Options
 -------
 
 | Option                                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <code>&#x2011;&#x2011;png&nbsp;&lt;FILE&gt;</code>                      | Specify output file `<FILE>` for PNG image generation. If `<FILE>` is `-`, standard output is used.                                                                                                                                                                                                                                                                                                                                                              |
+| <code>&#x2011;&#x2011;sym&nbsp;&lt;SYMBOL&gt;</code>                    | Treat CIF input as library and draw only the given symbol `<SYMBOL>`. `<SYMBOL>` can either be the number of the symbol, or the name of the symbol if it was defined within the CIF input using the symbol name command (9). When this option is given, all shape and call commands outside of symbol definitions are ignored, so that only the shapes within the given symbol (and its sub symbol calls) are drawn.                                             |
 | <code>&#x2011;&#x2011;style&nbsp;&lt;STYLE&gt;</code>                   | Choose drawing style of PNG image. `<STYLE>` can be one of: <code>electric&#x2011;cmos</code>, <code>electric&#x2011;mocmos</code> *(default)*, <code>electric&#x2011;mocmos&#x2011;print</code>, <code>electric&#x2011;nmos</code>, <code>electric&#x2011;rcmos</code>, <code>electric&#x2011;rcmos&#x2011;print</code> or `mask`                                                                                                                               |
 | <code>&#x2011;&#x2011;layer&nbsp;&lt;LAYER&gt;</code>                   | Select one layer to operate on. If not given, all layers are selected.                                                                                                                                                                                                                                                                                                                                                                                           |
 | <code>&#x2011;&#x2011;whitelist&nbsp;&lt;LAYERS&gt;</code>              | List of layers to draw.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -52,7 +54,7 @@ Options
 | <code>&#x2011;&#x2011;at&nbsp;[png]&lt;COORD&gt;[@&lt;LAYER&gt;]</code> | Highlight object(s) at coordinate at optionally given layer. If prefixed by `png`, coordinates are given in the transformed final image space.                                                                                                                                                                                                                                                                                                                   |
 | <code>&#x2011;&#x2011;roundgrowing</code>                               | Use alternative rounding style instead of rounding to the nearest integer. For example, the corner coordinates of rectangular boxes will be rounded in a way that makes the box larger rather than smaller. The smaller one of the two corner coordinates are rounded down, the larger one is rounded up. This can help to reduce the likelihood of small unintentional gaps due to rounding, but it may cause misalignment of box corners with polygon corners. |
 
-If no input files are given, standard input is read.
+Without any output options (like <code>&#x2011;&#x2011;png</code>), the CIF inputs are still read and checked for errors.
 
 <code>&#x2011;&#x2011;layer</code> can be used to select a single layer for drawing. <code>&#x2011;&#x2011;whitelist</code>
 can be used to select multiple layers to be drawn. The difference between the two is, <code>&#x2011;&#x2011;whitelist</code>

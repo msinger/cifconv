@@ -17,6 +17,7 @@ namespace cifconv
 			bool   heightGiven  = false;
 			bool   roundGrowing = false;
 			string outPng       = null;
+			string symStr       = null;
 			string styleStr     = null;
 			string layer        = null;
 			string whitelistStr = null;
@@ -38,21 +39,22 @@ namespace cifconv
 					string nextArg = (i + 1 < args.Length) ? args[i + 1] : null;
 					switch (args[i])
 					{
-						case "--png":        genPng       = true; outPng       = nextArg; i++; break;
-						case "--style":                           styleStr     = nextArg; i++; break;
-						case "--layer":                           layer        = nextArg; i++; break;
-						case "--whitelist":                       whitelistStr = nextArg; i++; break;
-						case "--blacklist":                       blacklistStr = nextArg; i++; break;
-						case "--scale":                           scaleStr     = nextArg; i++; break;
-						case "--origin-x":                        originXStr   = nextArg; i++; break;
-						case "--origin-y":                        originYStr   = nextArg; i++; break;
-						case "--width":                           widthStr     = nextArg; i++; break;
-						case "--height":                          heightStr    = nextArg; i++; break;
-						case "--bg":                              bgStr        = nextArg; i++; break;
-						case "--at":                              atStr        = nextArg; i++; break;
-						case "--roundgrowing":                    roundGrowing = true;         break;
-						case "--":           parseOptions = false;                             break;
-						default:             PrintHelp(); return args[i] == "--help" ? 0 : 1;
+						case "--png":          genPng       = true;  outPng       = nextArg; i++; break;
+						case "--sym":                                symStr       = nextArg; i++; break;
+						case "--style":                              styleStr     = nextArg; i++; break;
+						case "--layer":                              layer        = nextArg; i++; break;
+						case "--whitelist":                          whitelistStr = nextArg; i++; break;
+						case "--blacklist":                          blacklistStr = nextArg; i++; break;
+						case "--scale":                              scaleStr     = nextArg; i++; break;
+						case "--origin-x":                           originXStr   = nextArg; i++; break;
+						case "--origin-y":                           originYStr   = nextArg; i++; break;
+						case "--width":                              widthStr     = nextArg; i++; break;
+						case "--height":                             heightStr    = nextArg; i++; break;
+						case "--bg":                                 bgStr        = nextArg; i++; break;
+						case "--at":                                 atStr        = nextArg; i++; break;
+						case "--roundgrowing": roundGrowing = true;                               break;
+						case "--":             parseOptions = false;                              break;
+						default:               PrintHelp(); return args[i] == "--help" ? 0 : 1;
 					}
 					continue;
 				}
@@ -184,7 +186,7 @@ namespace cifconv
 					cif.WriteLine(l);
 			}
 			cif.Flush();
-			Layout layout = new Layout(cif.Interpret());
+			Layout layout = new Layout(cif.Interpret(symStr));
 
 			if (layout.HasNonIntegerCoords())
 			{
@@ -350,6 +352,7 @@ namespace cifconv
 			Console.Error.WriteLine();
 			Console.Error.WriteLine("OPTIONS:");
 			Console.Error.WriteLine("  --png <FILE>                 Convert CIF to PNG containing everything.");
+			Console.Error.WriteLine("  --sym <SYMBOL>               Draw only the given symbol from the CIF inputs.");
 			Console.Error.WriteLine("  --style <STYLE>              Choose drawing style of PNG.");
 			Console.Error.WriteLine("  --layer <LAYER>              Select one layer to operate on. If not given,");
 			Console.Error.WriteLine("                               all layers are selected.");
