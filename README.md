@@ -6,6 +6,9 @@ option in Electric VLSI for exporting layouts.
 
 Read [INSTALL](INSTALL) for build/install instructions.
 
+I use the Clipper library for polygon clipping. The origin of the Clipper library is here:
+<https://sourceforge.net/projects/polyclipping/>
+
 
 Example
 -------

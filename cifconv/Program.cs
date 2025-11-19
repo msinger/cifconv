@@ -13,10 +13,12 @@ namespace cifconv
 		{
 			bool   parseOptions = true;
 			bool   genPng       = false;
+			bool   genJS        = false;
 			bool   widthGiven   = false;
 			bool   heightGiven  = false;
 			bool   roundGrowing = false;
 			string outPng       = null;
+			string outJS        = null;
 			string symStr       = null;
 			string styleStr     = null;
 			string layer        = null;
@@ -40,6 +42,7 @@ namespace cifconv
 					switch (args[i])
 					{
 						case "--png":          genPng       = true;  outPng       = nextArg; i++; break;
+						case "--js":           genJS        = true;  outJS        = nextArg; i++; break;
 						case "--sym":                                symStr       = nextArg; i++; break;
 						case "--style":                              styleStr     = nextArg; i++; break;
 						case "--layer":                              layer        = nextArg; i++; break;
@@ -309,7 +312,7 @@ namespace cifconv
 			layout.Translate(new Vector(-originX, -originY));
 			layout.MakeIntegerCoords();
 
-			if (!genPng)
+			if (!genPng && !genJS)
 				Console.Error.WriteLine("CIF parsed successfully.");
 
 			if (genPng)
@@ -323,6 +326,18 @@ namespace cifconv
 				else
 					bmp = style.DrawLayer(layout, layer, width, height, bg);
 				bmp.Save(s, ImageFormat.Png);
+				s.Flush();
+			}
+
+			if (genJS)
+			{
+				layout.FlipY();
+
+				V6502SimGen gen = new V6502SimGen(layout);
+				Stream s = Console.OpenStandardOutput();
+				if (!string.IsNullOrEmpty(outJS) && outJS != "-")
+					s = File.Create(outJS);
+				gen.Generate(s);
 				s.Flush();
 			}
 
@@ -352,6 +367,8 @@ namespace cifconv
 			Console.Error.WriteLine();
 			Console.Error.WriteLine("OPTIONS:");
 			Console.Error.WriteLine("  --png <FILE>                 Convert CIF to PNG containing everything.");
+			Console.Error.WriteLine("  --js <FILE>                  Convert CIF to JavaScript containing tables for");
+			Console.Error.WriteLine("                               visual6502.org sim.");
 			Console.Error.WriteLine("  --sym <SYMBOL>               Draw only the given symbol from the CIF inputs.");
 			Console.Error.WriteLine("  --style <STYLE>              Choose drawing style of PNG.");
 			Console.Error.WriteLine("  --layer <LAYER>              Select one layer to operate on. If not given,");

@@ -103,6 +103,11 @@ namespace cifconv
 			Radius *= scale;
 		}
 
+		public void FlipY()
+		{
+			Center *= -1.0;
+		}
+
 		public void Translate(Vector v)
 		{
 			Center += v;

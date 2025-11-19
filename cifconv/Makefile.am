@@ -52,8 +52,10 @@ FILES = \
 	TextCommandDefinition.cs \
 	TransformationDefinition.cs \
 	TranslationDefinition.cs \
+	V6502SimGen.cs \
 	Vector.cs \
-	WireCommandDefinition.cs
+	WireCommandDefinition.cs \
+	$(top_srcdir)/extern/clipper/clipper.cs
 
 DATA_FILES =
 

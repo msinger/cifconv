@@ -7,6 +7,7 @@ namespace cifconv
 	{
 		void Draw(Graphics g, Pen p, Brush b);
 		void Scale(double scale);
+		void FlipY();
 		void Translate(Vector v);
 		void MakeIntegerCoords();
 	}

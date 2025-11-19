@@ -103,10 +103,27 @@ namespace cifconv
 			return Normalize();
 		}
 
+		public Polygon ToPolygon()
+		{
+			Box b = Normalize();
+			Polygon p = new Polygon();
+			p.P.Add(b.P0);
+			p.P.Add(new Vector(b.P1.X, b.P0.Y));
+			p.P.Add(b.P1);
+			p.P.Add(new Vector(b.P0.X, b.P1.Y));
+			return p;
+		}
+
 		public void Scale(double scale)
 		{
 			P0 *= scale;
 			P1 *= scale;
+		}
+
+		public void FlipY()
+		{
+			P0.Y *= -1.0;
+			P1.Y *= -1.0;
 		}
 
 		public void Translate(Vector v)

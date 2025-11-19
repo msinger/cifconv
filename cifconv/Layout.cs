@@ -51,6 +51,13 @@ namespace cifconv
 					d.Scale(scale);
 		}
 
+		public void FlipY()
+		{
+			foreach (List<IDrawable> l in Layers.Values)
+				foreach (IDrawable d in l)
+					d.FlipY();
+		}
+
 		public void Translate(Vector v)
 		{
 			foreach (List<IDrawable> l in Layers.Values)

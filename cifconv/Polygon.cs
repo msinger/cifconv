@@ -199,6 +199,16 @@ namespace cifconv
 				P[i] *= scale;
 		}
 
+		public void FlipY()
+		{
+			for (int i = 0; i < P.Count; i++)
+			{
+				Vector v = P[i];
+				v.Y *= -1.0;
+				P[i] = v;
+			}
+		}
+
 		public void Translate(Vector v)
 		{
 			for (int i = 0; i < P.Count; i++)
