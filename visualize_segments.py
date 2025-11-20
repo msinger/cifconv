@@ -78,6 +78,10 @@ def main():
     for idx, seg in enumerate(segments):
         boundary = seg["boundary"]
         holes = seg.get("holes", [])
+        well = seg.get("well", False)
+
+        # if well:
+        #     continue
 
         is_stray = idx in stray_indices
         fill_color = stray_fill if is_stray else normal_fill

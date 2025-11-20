@@ -150,6 +150,7 @@ namespace cifconv
 					Console.Error.WriteLine("Warning: Found stray NMOS transistors that sneaked into a well.");
 			}
 
+			List<Paths> well = new List<Paths>();
 			List<Paths> pmos = new List<Paths>();
 			List<Paths> nmos = new List<Paths>();
 			List<Paths> pact = new List<Paths>();
@@ -161,6 +162,7 @@ namespace cifconv
 			List<Paths> via1 = new List<Paths>();
 
 			foreach (var kvp in new Dictionary<string, List<Paths>> {
+			                        { "n-well",   well },
 			                        { "pmos",     pmos },
 			                        { "nmos",     nmos },
 			                        { "p-active", pact },
@@ -206,10 +208,18 @@ namespace cifconv
 				cnt++;
 			}
 
+			foreach (var p in well)
+			{
+				Segment seg = new Segment();
+				seg.Layer = NWELL;
+				seg.Paths = p;
+				segs.Add(p, seg);
+			}
+
 			foreach (var p in nact)
 			{
 				Segment seg = new Segment();
-				seg.Layer = NDIFF;
+				seg.Layer = DIFF;
 				seg.Paths = p;
 				segs.Add(p, seg);
 			}
@@ -217,7 +227,7 @@ namespace cifconv
 			foreach (var p in pact)
 			{
 				Segment seg = new Segment();
-				seg.Layer = PDIFF;
+				seg.Layer = DIFF;
 				seg.Paths = p;
 				segs.Add(p, seg);
 			}
@@ -331,7 +341,7 @@ namespace cifconv
 				}
 				if (psegs.Count > 0)
 					continue;
-				List<Segment> pasegs = FindIntersectionsWithGroupless(c, pact, segs);
+				List<Segment> pasegs = FindIntersectionsWithOtherGroups(c, pact, segs, g);
 				foreach (var paseg in pasegs)
 				{
 					if (paseg.Group != null)
@@ -346,7 +356,7 @@ namespace cifconv
 				}
 				if (pasegs.Count > 0)
 					continue;
-				List<Segment> nasegs = FindIntersectionsWithGroupless(c, nact, segs);
+				List<Segment> nasegs = FindIntersectionsWithOtherGroups(c, nact, segs, g);
 				foreach (var naseg in nasegs)
 				{
 					if (naseg.Group != null)
@@ -371,6 +381,7 @@ namespace cifconv
 				g = new SegmentGroup();
 				g.Segments.Add(pseg);
 				pseg.Group = g;
+				groups.Add(g);
 				if (pseg.Gates.Count == 0)
 				{
 					Console.Error.WriteLine("Warning: Found poly segment w/o connection to metal1 or transistor.");
@@ -388,6 +399,7 @@ namespace cifconv
 				g = new SegmentGroup();
 				g.Segments.Add(paseg);
 				paseg.Group = g;
+				groups.Add(g);
 				if (paseg.C1C2s.Count == 0)
 				{
 					Console.Error.WriteLine("Warning: Found p-active segment w/o connection to metal1 or transistor.");
@@ -405,6 +417,7 @@ namespace cifconv
 				g = new SegmentGroup();
 				g.Segments.Add(naseg);
 				naseg.Group = g;
+				groups.Add(g);
 				if (naseg.C1C2s.Count == 0)
 				{
 					Console.Error.WriteLine("Warning: Found n-active segment w/o connection to metal1 or transistor.");
@@ -451,10 +464,68 @@ namespace cifconv
 				}
 			}
 
+			// We are just trying to find one well connection and then assume this is VDD and
+			// connect it to all wells to save some time here.
+			Console.Error.WriteLine("Find n-well connected to n-active...");
+			SegmentGroup vdd_grp = null;
+			foreach (var nw in well)
+			{
+				List<Segment> nasegs = FindIntersectionsWithOtherGroups(nw, nact, segs, null);
+				if (nasegs.Count == 0)
+					continue;
+				foreach (var na in nasegs)
+				{
+					vdd_grp = na.Group;
+					if (vdd_grp != null)
+						break;
+				}
+				if (vdd_grp == null)
+					continue;
+			}
+			if (vdd_grp == null)
+				throw new ApplicationException("Couldn't find a single n-well connection. Don't know VDD for segdefs.js.");
+			foreach (var nw in well)
+			{
+				Segment wseg = segs[nw];
+				vdd_grp.Segments.Add(wseg);
+				wseg.Group = vdd_grp;
+			}
+
 			for (int i = 0; i < groups.Count; i++)
 				groups[i].Id = i;
 
+			Console.Error.WriteLine("Find group with most connections to nmos terminals...");
+			Dictionary<int, int> grpCount = new Dictionary<int, int>();
+			foreach (var tran in trans.Values)
+			{
+				if (tran.IsPmos)
+					continue;
+				int g1 = tran.C1.Group.Id;
+				int g2 = tran.C2.Group.Id;
+				if (grpCount.ContainsKey(g1))
+					grpCount[g1] = grpCount[g1] + 1;
+				else
+					grpCount.Add(g1, 1);
+				if (grpCount.ContainsKey(g2))
+					grpCount[g2] = grpCount[g2] + 1;
+				else
+					grpCount.Add(g2, 1);
+			}
+			var maxKvp = new KeyValuePair<int, int>(-1, 0);
+			foreach (var kvp in grpCount)
+			{
+				if (kvp.Value > maxKvp.Value)
+					maxKvp = kvp;
+			}
+			SegmentGroup gnd_grp = groups[maxKvp.Key];
+
+			Console.Error.WriteLine("Info: GND group is " + gnd_grp.Id.ToString());
+			Console.Error.WriteLine("Info: VDD group is " + vdd_grp.Id.ToString());
+
 			StreamWriter w = new StreamWriter(s);
+
+			w.WriteLine("// This JSON object is for debugging the polygon operations.");
+			w.WriteLine("// You can use it as input for the visualize_segments.py script.");
 			w.WriteLine("{");
 			w.Write("\"segments\": [");
 			string sep = "";
@@ -474,7 +545,11 @@ namespace cifconv
 				w.WriteLine(",");
 				w.WriteLine("\"holes\": [");
 				PrintPolys(w, h);
-				w.WriteLine("]");
+				w.WriteLine("],");
+				if (seg.Layer == NWELL)
+					w.WriteLine("\"well\": true");
+				else
+					w.WriteLine("\"well\": false");
 				w.WriteLine("}");
 				sep = ",";
 				segsa.Add(seg);
@@ -487,12 +562,70 @@ namespace cifconv
 			for (int i = 0; i < strays.Count; i++)
 			{
 				w.Write(sep);
-				w.Write(segsa.IndexOf(strays[i]).ToString());
+				w.Write(segsa.IndexOf(strays[i]).ToString(CultureInfo.InvariantCulture));
 				sep = ", ";
 			}
 			w.WriteLine("],");
 			w.WriteLine("\"pixels_per_unit\": 1.0");
 			w.WriteLine("}");
+
+			w.WriteLine();
+
+			w.WriteLine("// Copy this list into segdefs.js");
+			w.Write("var segdefs = [");
+			sep = "";
+			foreach (var seg in segs.Values)
+			{
+				if (seg.Group == null)
+					continue;
+				w.WriteLine(sep);
+				w.Write("[");
+				w.Write(seg.Group.Id.ToString(CultureInfo.InvariantCulture));
+				if (seg.Group == vdd_grp)
+					w.Write(",'+',");
+				else
+					w.Write(",'-',");
+				if (seg.Layer == DIFF && seg.Group == vdd_grp)
+					w.Write(PWDDIFF.ToString(CultureInfo.InvariantCulture));
+				else if (seg.Layer == DIFF && seg.Group == gnd_grp)
+					w.Write(GNDDIFF.ToString(CultureInfo.InvariantCulture));
+				else
+					w.Write(seg.Layer.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				PrintSegPolys(w, seg);
+				w.Write("]");
+				sep = ",";
+			}
+			w.WriteLine();
+			w.WriteLine("]");
+
+			w.WriteLine();
+
+			w.WriteLine("// Copy this list into transdefs.js");
+			w.Write("var transdefs = [");
+			sep = "";
+			foreach (var tran in trans.Values)
+			{
+				w.WriteLine(sep);
+				w.Write("['");
+				w.Write(tran.Name);
+				if (tran.IsPmos)
+					w.Write("','+',");
+				else
+					w.Write("','-',");
+				w.Write(tran.Gate.Group.Id.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				w.Write(tran.C1.Group.Id.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				w.Write(tran.C2.Group.Id.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				PrintBB(w, tran.Paths);
+				w.Write("]");
+				sep = ",";
+			}
+			w.WriteLine();
+			w.WriteLine("]");
+
 			w.Flush();
 		}
 
@@ -583,16 +716,15 @@ namespace cifconv
 			public Segment C2;
 		}
 
-		private const int METAL1  = 0;
-		private const int NDIFF   = 1;
-		private const int PDIFF   = 2;
-		private const int GNDDIFF = 3;
-		private const int PWDDIFF = 4;
-		private const int POLY    = 5;
-		private const int METAL2  = 6;
-
-		private const int CONTACT = -1;
-		private const int VIA1    = -2;
+		private const int NWELL   = 0;
+		private const int DIFF    = 1;
+		private const int GNDDIFF = 2;
+		private const int PWDDIFF = 3;
+		private const int POLY    = 4;
+		private const int CONTACT = 5;
+		private const int METAL1  = 6;
+		private const int VIA1    = 7;
+		private const int METAL2  = 8;
 
 		private class Segment
 		{
@@ -651,12 +783,66 @@ namespace cifconv
 				foreach (var y in x)
 				{
 					w.Write(sep2);
-					w.Write("[" + y.X.ToString() + ", " + y.Y.ToString() + "]");
+					w.Write("[" + y.X.ToString(CultureInfo.InvariantCulture) + ", " +
+					              y.Y.ToString(CultureInfo.InvariantCulture) + "]");
 					sep2 = ", ";
 				}
 				w.Write("]");
 				sep = ", ";
 			}
+		}
+
+		private static void PrintSegPolys(StreamWriter w, Segment s)
+		{
+			Path p = new Path();
+			if (s.Paths.Count == 1)
+			{
+				p = s.Paths[0];
+			}
+			else
+			{
+				for (int i = 0; i < s.Paths.Count; i++)
+				{
+					p.AddRange(s.Paths[i]);
+					// Repeat first point of path to signal termination
+					p.Add(s.Paths[i][0]);
+				}
+			}
+			string sep = "";
+			foreach (var x in p)
+			{
+				w.Write(sep);
+				w.Write(x.X.ToString(CultureInfo.InvariantCulture) + "," +
+				        x.Y.ToString(CultureInfo.InvariantCulture));
+				sep = ",";
+			}
+		}
+
+		private static void PrintBB(StreamWriter w, Paths p)
+		{
+			long minX = p[0][0].X;
+			long maxX = minX;
+			long minY = p[0][0].Y;
+			long maxY = minY;
+			foreach (var i in p)
+			{
+				foreach (var pt in i)
+				{
+					if (pt.X < minX) minX = pt.X;
+					if (pt.X > maxX) maxX = pt.X;
+					if (pt.Y < minY) minY = pt.Y;
+					if (pt.Y > maxY) maxY = pt.Y;
+				}
+			}
+			w.Write("[");
+			w.Write(minX.ToString(CultureInfo.InvariantCulture));
+			w.Write(",");
+			w.Write(maxX.ToString(CultureInfo.InvariantCulture));
+			w.Write(",");
+			w.Write(minY.ToString(CultureInfo.InvariantCulture));
+			w.Write(",");
+			w.Write(maxY.ToString(CultureInfo.InvariantCulture));
+			w.Write("]");
 		}
 	}
 }

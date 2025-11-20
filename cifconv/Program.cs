@@ -16,6 +16,8 @@ namespace cifconv
 			bool   genJS        = false;
 			bool   widthGiven   = false;
 			bool   heightGiven  = false;
+			bool   originXGiven = false;
+			bool   originYGiven = false;
 			bool   roundGrowing = false;
 			string outPng       = null;
 			string outJS        = null;
@@ -123,6 +125,10 @@ namespace cifconv
 			double originY = double.NaN;
 			if (originYStr != null && originYStr != "auto")
 				originY = double.Parse(originYStr, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo);
+			if (!double.IsNaN(originX))
+				originXGiven = true;
+			if (!double.IsNaN(originY))
+				originYGiven = true;
 
 			int width = 0;
 			if (widthStr != null && widthStr != "auto")
@@ -275,10 +281,17 @@ namespace cifconv
 			Console.Error.WriteLine("Image size: " + width.ToString(CultureInfo.InvariantCulture) +
 			                        "x" + height.ToString(CultureInfo.InvariantCulture));
 
-			if (double.IsNaN(originX))
+			if (!originXGiven)
 				originX = aabb.P0.X;
-			if (double.IsNaN(originY))
+			if (!originYGiven)
 				originY = aabb.P1.Y;
+
+			if (genJS)
+			{
+				if (!originYGiven)
+					originY = aabb.P0.Y;
+			}
+
 			Console.Error.WriteLine("Set origin: " + originX.ToString(CultureInfo.InvariantCulture) +
 			                        "x" + originY.ToString(CultureInfo.InvariantCulture));
 			aabb.Translate(new Vector(-originX, -originY));
@@ -331,7 +344,7 @@ namespace cifconv
 
 			if (genJS)
 			{
-				layout.FlipY();
+				//layout.FlipY();
 
 				V6502SimGen gen = new V6502SimGen(layout);
 				Stream s = Console.OpenStandardOutput();
