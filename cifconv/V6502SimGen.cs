@@ -500,8 +500,16 @@ namespace cifconv
 				wseg.Group = vdd_grp;
 			}
 
+			// Assign group IDs and calculate area of each group.
 			for (int i = 0; i < groups.Count; i++)
+			{
 				groups[i].Id = i;
+				double sum = 0.0;
+				foreach (Segment seg in groups[i].Segments)
+					foreach (Path path in seg.Paths)
+						sum += Clipper.Area(path);
+				groups[i].Area = (long)sum;
+			}
 
 			Console.Error.WriteLine("Find group with most connections to nmos terminals...");
 			Dictionary<int, int> grpCount = new Dictionary<int, int>();
@@ -585,21 +593,24 @@ namespace cifconv
 			sep = "";
 			foreach (var seg in segs.Values)
 			{
-				if (seg.Group == null)
+				var grp = seg.Group;
+				if (grp == null)
 					continue;
 				w.WriteLine(sep);
 				w.Write("[");
-				w.Write(seg.Group.Id.ToString(CultureInfo.InvariantCulture));
-				if (seg.Group == vdd_grp)
+				w.Write(grp.Id.ToString(CultureInfo.InvariantCulture));
+				if (grp == vdd_grp)
 					w.Write(",'+',");
 				else
 					w.Write(",'-',");
-				if (seg.Layer == DIFF && seg.Group == vdd_grp)
+				if (seg.Layer == DIFF && grp == vdd_grp)
 					w.Write(PWDDIFF.ToString(CultureInfo.InvariantCulture));
-				else if (seg.Layer == DIFF && seg.Group == gnd_grp)
+				else if (seg.Layer == DIFF && grp == gnd_grp)
 					w.Write(GNDDIFF.ToString(CultureInfo.InvariantCulture));
 				else
 					w.Write(seg.Layer.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				w.Write(grp.Area.ToString(CultureInfo.InvariantCulture));;
 				w.Write(",");
 				PrintSegPolys(w, seg);
 				w.Write("]");
@@ -775,6 +786,7 @@ namespace cifconv
 		{
 			public int           Id;
 			public List<Segment> Segments = new List<Segment>();
+			public long          Area;
 		}
 
 		private static void PolyTreeToList(List<Paths> l, PolyNode p)
