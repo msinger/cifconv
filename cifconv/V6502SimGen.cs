@@ -281,8 +281,10 @@ namespace cifconv
 				co.AddPaths(t.Paths, JoinType.jtSquare, EndType.etClosedPolygon);
 				Paths infl = new Paths();
 				co.Execute(ref infl, touchDelta);
-				List<Paths> gi = FindIntersections(infl, poly);
-				List<Paths> ci = FindIntersections(infl, t.IsPmos ? pact : nact);
+				List<long> xgi = new List<long>();
+				List<long> xci = new List<long>();
+				List<Paths> gi = FindIntersections(t.Paths, poly, xgi);
+				List<Paths> ci = FindIntersections(infl, t.IsPmos ? pact : nact, xci);
 				if (gi.Count != 1)
 					Console.Error.WriteLine("Error: Found transistor with " + gi.Count.ToString() + " gate connections.");
 				if (ci.Count != 2)
@@ -295,6 +297,13 @@ namespace cifconv
 				t.Gate.Gates.Add(t);
 				t.C1.C1C2s.Add(t);
 				t.C2.C1C2s.Add(t);
+				// Calculate rough width and length of transistor.
+				t.C1Width = xci[0] / 2 - touchDelta;
+				t.C2Width = xci[1] / 2 - touchDelta;
+				if (t.C1Width < 1) t.C1Width = 1;
+				if (t.C2Width < 1) t.C2Width = 1;
+				t.GateWidth = (xgi[0] - t.C1Width - t.C2Width) / 2;
+				if (t.GateWidth < 1) t.GateWidth = 1;
 			}
 
 			List<SegmentGroup> groups = new List<SegmentGroup>();
@@ -620,6 +629,12 @@ namespace cifconv
 				w.Write(tran.C2.Group.Id.ToString(CultureInfo.InvariantCulture));
 				w.Write(",");
 				PrintBB(w, tran.Paths);
+				w.Write(",");
+				w.Write(tran.GateWidth.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				w.Write(tran.C1Width.ToString(CultureInfo.InvariantCulture));
+				w.Write(",");
+				w.Write(tran.C2Width.ToString(CultureInfo.InvariantCulture));
 				w.Write("]");
 				sep = ",";
 			}
@@ -627,6 +642,20 @@ namespace cifconv
 			w.WriteLine("]");
 
 			w.Flush();
+		}
+
+		private static long PathPerimeter(Path p)
+		{
+			if (p == null || p.Count < 2) return 0;
+			long len = 0;
+			for (int i = 0; i < p.Count; i++)
+			{
+				var a = p[i];
+				var b = p[(i + 1) % p.Count]; // closed loop
+				// Only works for transistors that are axis aligned.
+				len += Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
+			}
+			return len;
 		}
 
 		private static SegmentGroup MergeGroups(List<SegmentGroup> groups, SegmentGroup a, SegmentGroup b)
@@ -649,7 +678,7 @@ namespace cifconv
 			return keep;
 		}
 
-		private static List<Paths> FindIntersections(Paths p, List<Paths> l)
+		private static List<Paths> FindIntersections(Paths p, List<Paths> l, List<long> xs)
 		{
 			List<Paths> r = new List<Paths>();
 			foreach (var s in l)
@@ -660,7 +689,11 @@ namespace cifconv
 				Paths i = new Paths();
 				c.Execute(ClipType.ctIntersection, i, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
 				if (i.Count > 0)
+				{
 					r.Add(s);
+					if (xs != null)
+						xs.Add(PathPerimeter(i[0]));
+				}
 			}
 			return r;
 		}
@@ -714,6 +747,9 @@ namespace cifconv
 			public Segment Gate;
 			public Segment C1;
 			public Segment C2;
+			public long    GateWidth;
+			public long    C1Width;
+			public long    C2Width;
 		}
 
 		private const int NWELL   = 0;
